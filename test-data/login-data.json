@@ -1,0 +1,50 @@
+{
+    "valid": [
+        {
+            "email": "hms_pw_1793181695417_1797@example.com",
+            "pwd": "1793182924559_9232"
+        },
+        {
+            "email": "hms_pw_1792731700516_1161@example.com",
+            "pwd": "1792664248725_3871"
+        },
+        {
+            "email": "hms_pw_1792663754667_2528@example.com",
+            "pwd": "123456789"
+        },
+        {
+            "email": "hms_pw_1792995461089_7678@example.com",
+            "pwd": "123456789"
+        },
+        {
+            "email": "hms_pw_1792995561826_7046@example.com",
+            "pwd": "123456789"
+        },
+        {
+            "email": "hms_pw_1792996059685_6257@example.com",
+            "pwd": "123456789"
+        },
+        {
+            "email": "hms_pw_1792996171516_4131@example.com",
+            "pwd": "123456789"
+        },
+        {
+            "email": "hms_pw_1792996983103_7072@example.com",
+            "pwd": "123456789"
+        },
+        {
+            "email": "hms_pw_1793182916804_6447@example.com",
+            "pwd": "123456789"
+        }
+    ],
+    "invalid": [
+        {
+            "email": "hms02@gamil.com",
+            "pwd": "123456789"
+        },
+        {
+            "email": "jujutsu@gmail.com",
+            "pwd": "abcdefg"
+        }
+    ]
+}
