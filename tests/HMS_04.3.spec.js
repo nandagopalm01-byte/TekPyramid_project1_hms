@@ -438,8 +438,8 @@ test.describe("DOCTOR AUTHENTICATED SCRIPTS",()=>{
     test("HMS_TS_15 Verify patient's details are visible when entered in Search",{tag:'@auth_test3'},async({page})=>{
         await page.goto('http://49.249.29.4:8081/TestServer/Build/Hospital_Doctor_Patient_Management_System/hms/doctor/dashboard.php');
         let dr_dashboard = new doctorLogin(page)
-        await dr_dashboard.SearchPatient(patientData.name)
-        await expect(page.getByRole("row").filter({hasText:`${patientData.name}`}).first()).toBeVisible()
+        await dr_dashboard.SearchPatient(patient_data.name)
+        await expect(page.getByRole("row").filter({hasText:`${patient_data.name}`}).first()).toBeVisible()
 
     })
 })
