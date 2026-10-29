@@ -263,7 +263,7 @@ test.describe("HMS E2E TESTING ",()=>{
         await loginPatient(page,emailUpdatePatient.email,emailUpdatePatient.pwd);
 
         const updateDetails = new patient_details_updation(page)
-        const updatedPwd = uniquePwd()
+        const updatedPwd = fakerdata.getpwd()
         const oldpwd = emailUpdatePatient.pwd
         await updateDetails.update_patient_pwd(emailUpdatePatient.pwd,updatedPwd)
 
