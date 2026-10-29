@@ -1,0 +1,79 @@
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Install Dependencies') {
+            steps {
+                bat 'npm install'
+                bat 'npx playwright install'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                script {
+                    def status
+
+                    withCredentials([
+                        string(credentialsId: 'BASE_URL',
+                               variable: 'BASE_URL'),
+
+                        string(credentialsId: 'PATIENT_1_EMAIL',
+                               variable: 'PATIENT_1_EMAIL'),
+                        string(credentialsId: 'PATIENT_1_PASSWORD',
+                               variable: 'PATIENT_1_PASSWORD'),
+
+                        string(credentialsId: 'UPD_PATIENT_EMAIL',
+                               variable: 'UPD_PATIENT_EMAIL'),
+                        string(credentialsId: 'UPD_PATIENT_PASSWORD',
+                               variable: 'UPD_PATIENT_PASSWORD'),
+
+                        string(credentialsId: 'DOCTOR_1_EMAIL',
+                               variable: 'DOCTOR_1_EMAIL'),
+                        string(credentialsId: 'DOCTOR_1_PWD',
+                               variable: 'DOCTOR_1_PWD'),
+
+                        string(credentialsId: 'DOCTOR_2_EMAIL',
+                               variable: 'DOCTOR_2_EMAIL'),
+                        string(credentialsId: 'DOCTOR_2_PWD',
+                               variable: 'DOCTOR_2_PWD')
+                    ]) {
+                        status = bat(
+                            script: 'npx playwright test tests/HMS_04.3.spec.js',
+                            returnStatus: true
+                        )
+                    }
+
+                    if (status != 0) {
+                        echo 'Tests failed, but continuing to generate reports...'
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Generating HTML and Allure reports...'
+
+            // Existing Playwright HTML report
+            publishHTML(target: [
+                reportDir: 'playwright-report',
+                reportFiles: 'index.html',
+                reportName: 'Playwright HTML Report',
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                allowMissing: true,
+                linkRelative: false
+            ])
+
+            // Allure report
+            allure(
+                includeProperties: false,
+                jdk: '',
+                results: [[path: 'allure-results']]
+            )
+        }
+    }
+}
