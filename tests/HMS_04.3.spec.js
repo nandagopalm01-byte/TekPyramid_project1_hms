@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { test, expect } from '../fixtures/hms_login.fixture.js';
+import { fakerdata } from "../utils/FakerData.js";
+
 import hms from "../POM/01_hms";
 import homePage from "../POM/02_home.page";
 import patientLog from "../POM/03_patient_login.page";
@@ -25,8 +27,13 @@ const validPatient = { email: process.env.PATIENT_1_EMAIL?.trim(), pwd: process.
 const emailUpdatePatient = loginData.valid.at(0);
 // const emailUpdatePatient = { email: process.env.UPD_PATIENT_EMAIL?.trim(), pwd: process.env.UPD_PATIENT_PASSWORD?.trim() };
 
-const uniqueEmail = () =>`hms_pw_${Date.now()}_${Math.floor(Math.random() * 10000)}@example.com`;
-const uniquePwd = ()=>`${Date.now()}_${Math.floor(Math.random() * 10000)}`
+// const uniqueEmail = () =>`hms_pw_${Date.now()}_${Math.floor(Math.random() * 10000)}@example.com`;
+// const uniquePwd = ()=>`${Date.now()}_${Math.floor(Math.random() * 10000)}`
+
+const uniqueEmail = fakerdata.getemail()
+const uniquePwd = fakerdata.getpwd()
+const regPName = fakerdata.getname()
+const pdname = fakerdata.getname()
 
 // --------------------------------------------------
 // REUSABLE HELPERS
@@ -80,24 +87,25 @@ async function registerNewPatient(page) {
     const patientRegister = new patientregister(page);
     await expect(page).toHaveURL(/Hospital_Doctor_Patient_Management_System/);
     await expect(patientRegister.create_accnt_link).toBeVisible();
-    const email = uniqueEmail();
+    //const email = uniqueEmail();
     const dialogPromise = page.waitForEvent("dialog");
+
     await patientRegister.registration(
-        registrationData.name,
-        registrationData.address,
-        registrationData.city,
-        email,
-        registrationData.pwd
+        regPName,
+        fakerdata.getaddress(),
+        fakerdata.getcity(),
+        uniqueEmail,
+        uniquePwd
     );
     const dialog = await dialogPromise;
     const message = dialog.message();
     await dialog.accept();
     return {
-        email,
-        password: registrationData.pwd,
+        email: uniqueEmail,
+        password: uniquePwd,
         message,
         patientRegister,
-        name: registrationData.name
+        name: regPName
     };
 }
 
@@ -281,7 +289,8 @@ test.describe("HMS E2E TESTING ",()=>{
 
         const patientAppointment = new patient_details_updation(page)
         const oldEmail = emailUpdatePatient.email;
-        const updatedEmail = uniqueEmail();
+        // const updatedEmail = uniqueEmail();
+        const updatedEmail = uniqueEmail
 
         await patientAppointment.open_update_profile();
         await patientAppointment.update_patient_email(updatedEmail);
@@ -394,10 +403,10 @@ test.describe("DOCTOR AUTHENTICATED SCRIPTS",()=>{
         await expect(page.getByText("Doctor | Dashboard")).toBeVisible();
 
         const doctor_patient = new Doctor_Patient(page)
-        const email = uniqueEmail()
+        const email = uniqueEmail
 
         await doctor_patient.add_patient(
-            patient_data.name,
+            pdname,
             patient_data.age,
             patient_data.phno,
             patient_data.address,
@@ -405,7 +414,7 @@ test.describe("DOCTOR AUTHENTICATED SCRIPTS",()=>{
             email
         )
         await doctor_patient.manage_patient()
-        await expect(page.locator(`//td[@class="hidden-xs" and normalize-space()="${patient_data.name}"]`).first()).toBeVisible()
+        await expect(page.locator(`//td[@class="hidden-xs" and normalize-space()="${pdname}"]`).first()).toBeVisible()
     })
 
     test("HMS_TS_14 - Verify that medical history can be added for a patient",{tag:'@failed2'},async({page})=>{
@@ -438,8 +447,8 @@ test.describe("DOCTOR AUTHENTICATED SCRIPTS",()=>{
     test("HMS_TS_15 Verify patient's details are visible when entered in Search",{tag:'@auth_test3'},async({page})=>{
         await page.goto('http://49.249.29.4:8081/TestServer/Build/Hospital_Doctor_Patient_Management_System/hms/doctor/dashboard.php');
         let dr_dashboard = new doctorLogin(page)
-        await dr_dashboard.SearchPatient(patient_data.name)
-        await expect(page.getByRole("row").filter({hasText:`${patient_data.name}`}).first()).toBeVisible()
+        await dr_dashboard.SearchPatient(pdname)
+        await expect(page.getByRole("row").filter({hasText:`${pdname}`}).first()).toBeVisible()
 
     })
 })
