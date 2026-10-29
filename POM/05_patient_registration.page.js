@@ -27,6 +27,10 @@ class patientregister{
         await this.patient_pwd.fill(pwd)
         await this.patient_cnfpwd.fill(pwd)
         await this.register_agree.check()
+
+        // Wait for the form's validation to enable Submit
+        await expect(this.register_submit_btn).toBeEnabled();
+        
         await this.register_submit_btn.click()
     }
 }

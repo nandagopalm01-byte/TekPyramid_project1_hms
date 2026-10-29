@@ -273,7 +273,8 @@ test.describe("HMS E2E TESTING ",()=>{
         fs.writeFileSync(loginDataPath,JSON.stringify(loginData, null, 4),"utf8");
         // Update the in-memory account reference
         emailUpdatePatient.pwd = updatedPwd;
-        
+        console.log(`Password updated successfully: ${oldpwd} -> ${updatedPwd}`);
+
         await context.close()
     })
 
