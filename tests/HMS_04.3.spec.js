@@ -24,7 +24,7 @@ const patient_data = JSON.parse(fs.readFileSync(patientDataPath, "utf8"));
 const medhistory = JSON.parse(fs.readFileSync(medicalHistoryPath, "utf8"));
 
 const validPatient = { email: process.env.PATIENT_1_EMAIL?.trim(), pwd: process.env.PATIENT_1_PASSWORD?.trim() };
-const emailUpdatePatient = loginData.valid.at(0);
+const emailUpdatePatient = loginData.valid.at(2);
 // const emailUpdatePatient = { email: process.env.UPD_PATIENT_EMAIL?.trim(), pwd: process.env.UPD_PATIENT_PASSWORD?.trim() };
 
 // const uniqueEmail = () =>`hms_pw_${Date.now()}_${Math.floor(Math.random() * 10000)}@example.com`;
@@ -267,7 +267,7 @@ test.describe("HMS E2E TESTING ",()=>{
         const oldpwd = emailUpdatePatient.pwd
         await updateDetails.update_patient_pwd(emailUpdatePatient.pwd,updatedPwd)
 
-        loginData.valid[0].pwd = updatedPwd;
+        loginData.valid[2].pwd = updatedPwd;
 
         // Write the updated data back to the JSON file
         fs.writeFileSync(loginDataPath,JSON.stringify(loginData, null, 4),"utf8");
@@ -285,10 +285,16 @@ test.describe("HMS E2E TESTING ",()=>{
     test("HMS_TS_08 - Update patient email address", async ({ browser }) => {
 
         const { context, page } = await openPatientLogin(browser);
-        await loginPatient(page,emailUpdatePatient.email,emailUpdatePatient.pwd);
+        const result = await registerNewPatient(page);
+        expect(result.message).toBe("Successfully Registered. You can login now");
+        await result.patientRegister.re_login.click();
+        const patientLogin = await loginPatient(page,result.email,result.password);
+
+        // const { context, page } = await openPatientLogin(browser);
+        // await loginPatient(page,emailUpdatePatient.email,emailUpdatePatient.pwd);
 
         const patientAppointment = new patient_details_updation(page)
-        const oldEmail = emailUpdatePatient.email;
+        const oldEmail = result.email;
         // const updatedEmail = uniqueEmail();
         const updatedEmail = uniqueEmail
 
@@ -296,7 +302,7 @@ test.describe("HMS E2E TESTING ",()=>{
         await patientAppointment.update_patient_email(updatedEmail);
         await expect(patientAppointment.upd_email_sucedd_msg).toHaveText("Your email updated Successfully");
 
-        loginData.valid[0].email = updatedEmail;
+        loginData.valid[2].email = updatedEmail;
 
         // Write the updated data back to the JSON file
         fs.writeFileSync(loginDataPath,JSON.stringify(loginData, null, 4),"utf8");

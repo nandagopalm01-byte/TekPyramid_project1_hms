@@ -46,7 +46,7 @@ const patient_data = JSON.parse(fs.readFileSync(patientDataPath, "utf8"));
 const medhistory = JSON.parse(fs.readFileSync(medicalHistoryPath, "utf8"));
 
 const validPatient = { email: process.env.PATIENT_1_EMAIL?.trim(), pwd: process.env.PATIENT_1_PASSWORD?.trim() };
-const emailUpdatePatient = loginData.valid.at(0);
+const emailUpdatePatient = loginData.valid.at(2);
 // const emailUpdatePatient = { email: process.env.UPD_PATIENT_EMAIL?.trim(), pwd: process.env.UPD_PATIENT_PASSWORD?.trim() };
 
 const uniqueEmail = () =>`hms_pw_${Date.now()}_${Math.floor(Math.random() * 10000)}@example.com`;
