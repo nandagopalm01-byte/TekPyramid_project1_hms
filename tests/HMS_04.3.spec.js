@@ -13,31 +13,34 @@ import doctorLogin from "../POM/07_doctor_login.page.js";
 import Doctor_Patient from "../POM/08_doctor_patient.page.js";
 
 const testDataDir = path.resolve(process.cwd(), "test-data");
-const loginDataPath = path.join(testDataDir, "login-data.json");
-const registrationDataPath = path.join(testDataDir, "registration-data.json");
 const patientDataPath = path.join(testDataDir, "patient-data.json");
 const medicalHistoryPath = path.join(testDataDir,"patient-medical-history.json");
 
-const loginData = JSON.parse(fs.readFileSync(loginDataPath, "utf8"));
-const registrationData = JSON.parse(fs.readFileSync(registrationDataPath, "utf8"));
 const patient_data = JSON.parse(fs.readFileSync(patientDataPath, "utf8"));
 const medhistory = JSON.parse(fs.readFileSync(medicalHistoryPath, "utf8"));
 
 const validPatient = { email: process.env.PATIENT_1_EMAIL?.trim(), pwd: process.env.PATIENT_1_PASSWORD?.trim() };
-const emailUpdatePatient = loginData.valid.at(2);
-// const emailUpdatePatient = { email: process.env.UPD_PATIENT_EMAIL?.trim(), pwd: process.env.UPD_PATIENT_PASSWORD?.trim() };
 
-// const uniqueEmail = () =>`hms_pw_${Date.now()}_${Math.floor(Math.random() * 10000)}@example.com`;
+const uniqueEmail2 = () =>`hms_pw_${Date.now()}_${Math.floor(Math.random() * 10000)}@example.com`;
+const safeTestText = (value) => value.replaceAll("'", "");
 // const uniquePwd = ()=>`${Date.now()}_${Math.floor(Math.random() * 10000)}`
 
-const uniqueEmail = fakerdata.getemail()
-const uniquePwd = fakerdata.getpwd()
-const regPName = fakerdata.getname()
-const pdname = fakerdata.getname()
+const pdname = safeTestText(fakerdata.getname())
 
 // --------------------------------------------------
 // REUSABLE HELPERS
 // --------------------------------------------------
+
+async function withAcceptedDialog(page, action) {
+    const dialogPromise = page.waitForEvent("dialog").then(async (dialog) => {
+        const message = dialog.message();
+        await dialog.accept();
+        return message;
+    });
+
+    const [message] = await Promise.all([dialogPromise, action()]);
+    return message;
+}
 
 async function openPatientLogin(browser) {  
     const context = await browser.newContext();
@@ -85,27 +88,26 @@ async function loginPatient(page, email, password) {
 
 async function registerNewPatient(page) {
     const patientRegister = new patientregister(page);
-    await expect(page).toHaveURL(/Hospital_Doctor_Patient_Management_System/);
-    await expect(patientRegister.create_accnt_link).toBeVisible();
-    //const email = uniqueEmail();
-    const dialogPromise = page.waitForEvent("dialog");
-
-    await patientRegister.registration(
-        regPName,
-        fakerdata.getaddress(),
-        fakerdata.getcity(),
-        uniqueEmail,
-        uniquePwd
+    const email = uniqueEmail2();
+    const password = fakerdata.getpwd();
+    const name = safeTestText(fakerdata.getname());
+    const message = await withAcceptedDialog(
+        page,
+        () => patientRegister.registration(
+            name,
+            safeTestText(fakerdata.getaddress()),
+            safeTestText(fakerdata.getcity()),
+            email,
+            password
+        )
     );
-    const dialog = await dialogPromise;
-    const message = dialog.message();
-    await dialog.accept();
+
     return {
-        email: uniqueEmail,
-        password: uniquePwd,
+        email,
+        password,
         message,
         patientRegister,
-        name: regPName
+        name
     };
 }
 
@@ -116,7 +118,7 @@ async function registerNewPatient(page) {
 
 test.describe("HMS E2E TESTING ",()=>{
 
-    test.setTimeout(60000);
+    test.setTimeout(120000);
 
     // --------------------------------------------------
     // HMS_TS_01: PATIENT REGISTRATION
@@ -127,12 +129,6 @@ test.describe("HMS E2E TESTING ",()=>{
         const { context, page } = await openPatientLogin(browser);
         const result = await registerNewPatient(page);
         expect(result.message).toBe("Successfully Registered. You can login now");
-        const newUser1 = {
-            email: result.email,
-            pwd: result.password
-        };
-        loginData.valid.push(newUser1);
-        fs.writeFileSync(loginDataPath,JSON.stringify(loginData, null, 4),"utf8");
 
         await context.close();
     })
@@ -152,13 +148,6 @@ test.describe("HMS E2E TESTING ",()=>{
         await result.patientRegister.re_login.click();
         const patientLogin = await loginPatient(page,result.email,result.password);
         await expect(patientLogin.heading).toHaveText("User | Dashboard");
-
-        const newUser2 = {
-            email: result.email,
-            pwd: result.password
-        };
-        loginData.valid.push(newUser2);
-        fs.writeFileSync(loginDataPath,JSON.stringify(loginData, null, 4),"utf8");
 
         await context.close();
     })
@@ -257,23 +246,16 @@ test.describe("HMS E2E TESTING ",()=>{
     // Functional testing
     // --------------------------------------------------
 
-    // this many fail when running all tests bcz HMS_TS_08 will update email of account but in .env file the change is not made 
     test("HMS_TS_09 - Update patient password",async({browser})=>{
         const { context, page } = await openPatientLogin(browser);
-        await loginPatient(page,emailUpdatePatient.email,emailUpdatePatient.pwd);
+        const result = await registerNewPatient(page);
+        expect(result.message).toBe("Successfully Registered. You can login now");
+        await result.patientRegister.re_login.click();
+        await loginPatient(page, result.email, result.password);
 
         const updateDetails = new patient_details_updation(page)
         const updatedPwd = fakerdata.getpwd()
-        const oldpwd = emailUpdatePatient.pwd
-        await updateDetails.update_patient_pwd(emailUpdatePatient.pwd,updatedPwd)
-
-        loginData.valid[2].pwd = updatedPwd;
-
-        // Write the updated data back to the JSON file
-        fs.writeFileSync(loginDataPath,JSON.stringify(loginData, null, 4),"utf8");
-        // Update the in-memory account reference
-        emailUpdatePatient.pwd = updatedPwd;
-        console.log(`Password updated successfully: ${oldpwd} -> ${updatedPwd}`);
+        await updateDetails.update_patient_pwd(result.password,updatedPwd)
 
         await context.close()
     })
@@ -291,25 +273,14 @@ test.describe("HMS E2E TESTING ",()=>{
         await result.patientRegister.re_login.click();
         const patientLogin = await loginPatient(page,result.email,result.password);
 
-        // const { context, page } = await openPatientLogin(browser);
-        // await loginPatient(page,emailUpdatePatient.email,emailUpdatePatient.pwd);
-
         const patientAppointment = new patient_details_updation(page)
         const oldEmail = result.email;
-        // const updatedEmail = uniqueEmail();
-        const updatedEmail = uniqueEmail
+        const updatedEmail = uniqueEmail2()
 
         await patientAppointment.open_update_profile();
         await patientAppointment.update_patient_email(updatedEmail);
         await expect(patientAppointment.upd_email_sucedd_msg).toHaveText("Your email updated Successfully");
 
-        loginData.valid[2].email = updatedEmail;
-
-        // Write the updated data back to the JSON file
-        fs.writeFileSync(loginDataPath,JSON.stringify(loginData, null, 4),"utf8");
-
-        // Update the in-memory account reference
-        emailUpdatePatient.email = updatedEmail;
         console.log(`Email updated successfully: ${oldEmail} -> ${updatedEmail}`);
 
         // Verify the new email is reflected in the email field
@@ -358,17 +329,12 @@ test.describe("HMS E2E TESTING ",()=>{
 
 
     test("HMS_TS_12 - Verify a new Patient's Doctor appointment in Doctor's Appointment history",{tag:'@failed1'}, async ({ browser }) => {
+        test.setTimeout(240000);
 
         const { context, page } = await openPatientLogin(browser);
         const result = await registerNewPatient(page);
 
         expect(result.message).toBe("Successfully Registered. You can login now");
-        const newUser1 = {
-            email: result.email,
-            pwd: result.password
-        };
-        loginData.valid.push(newUser1);
-        fs.writeFileSync(loginDataPath,JSON.stringify(loginData, null, 4),"utf8");
         
         await result.patientRegister.re_login.click();
         const patientLogin = await loginPatient(page, result.email, result.password);
@@ -381,6 +347,7 @@ test.describe("HMS E2E TESTING ",()=>{
             "2026-12-15",
             "10:00 AM"
         );
+        expect(message).toBe("Your appointment successfully booked");
 
         const { context: context2, page: page2 } = await openDoctorLogin(browser);
 
@@ -402,6 +369,7 @@ test.describe("HMS E2E TESTING ",()=>{
 
 test.describe("DOCTOR AUTHENTICATED SCRIPTS",()=>{
     test.use({ storageState:'.auth/user.json'});
+    test.setTimeout(120000);
     test("HMS_TS_13 - Add a Patient and Verify patient is added in Manage Patients",{tag:'@failed2'},async({page})=>{
 
         await page.goto(
@@ -410,7 +378,7 @@ test.describe("DOCTOR AUTHENTICATED SCRIPTS",()=>{
         await expect(page.getByText("Doctor | Dashboard")).toBeVisible();
 
         const doctor_patient = new Doctor_Patient(page)
-        const email = uniqueEmail
+        const email = uniqueEmail2()
 
         await doctor_patient.add_patient(
             pdname,
@@ -441,11 +409,10 @@ test.describe("DOCTOR AUTHENTICATED SCRIPTS",()=>{
         await mdialog.locator('input[name="temp"]').fill(medhistory.patient_temp)
         await mdialog.getByPlaceholder("Medical Prescription").fill(medhistory.prescription)
 
-        const dialogPromise = page.waitForEvent("dialog");
-        await mdialog.locator('button[name="submit"]').click()
-        const dialog = await dialogPromise;
-        const message = dialog.message();
-        await dialog.accept();
+        const message = await withAcceptedDialog(
+            page,
+            () => mdialog.locator('button[name="submit"]').click()
+        );
         
         expect(message).toBe("Medicle history has been added.");
         

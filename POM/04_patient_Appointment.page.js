@@ -1,5 +1,3 @@
-import {test,expect} from '@playwright/test'
-
 class appointment{
     constructor(page){
         this.page = page
@@ -14,16 +12,6 @@ class appointment{
         this.appt_history = page.locator('//span[@class="title" and text()=" Appointment History "]')
     }
 
-    // async appointment_booking(spez,drname,date,time){
-    //     await this.book_appointment.click()
-    //     await this.doc_specialization.selectOption(spez)
-    //     await this.doctor_name.selectOption(drname)
-    //     await this.appt_date.pressSequentially(date)
-    //     await this.appt_time.fill(time)
-    //     await this.submit_btn.click()
-
-    // }
-
     async appointment_booking(spez, drname, date, time) {
         await this.book_appointment.click();
         await this.doc_specialization.selectOption(spez);
@@ -31,16 +19,17 @@ class appointment{
         await this.appt_date.pressSequentially(date);
         await this.appt_time.fill(time);
 
-        // Accept the native alert as soon as it appears. Waiting to accept it
-        // after awaiting the submit click can deadlock the click until timeout.
         const dialogMessagePromise = this.page.waitForEvent("dialog").then(async (dialog) => {
-        const message = dialog.message();
+            const message = dialog.message();
             await dialog.accept();
             return message;
         });
 
-        await this.submit_btn.click();
-        return await dialogMessagePromise;
+        const [message] = await Promise.all([
+            dialogMessagePromise,
+            this.submit_btn.click()
+        ]);
+        return message;
     }
 
     async view_appt_history(){

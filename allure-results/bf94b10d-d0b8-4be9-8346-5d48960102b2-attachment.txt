@@ -1,0 +1,7 @@
+Name: Peggy Price
+Address: 566 The Avenue Mohammedview Vermont 90151-4394
+City: New Wava
+Email: hms_pw_1793360467707_1784@example.com
+Password fields match: true
+Agreement checked: true
+Submit enabled: true

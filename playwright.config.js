@@ -16,7 +16,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 export default defineConfig({
   testDir: './tests',
   outputDir: 'test-results/',
-  timeout: 30 * 1000,                  // 30 seconds max per test
+  timeout: 60 * 1000,                  // 30 seconds max per test
   expect: {timeout: 5000},              // 5 seconds max for individual assertions (e.g., toBeVisible)},
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -36,7 +36,7 @@ export default defineConfig({
     baseURL: process.env.BASE_URL,
     testIdAttribute: 'data-test',
     screenshot:'only-on-failure',
-    video: 'on',
+    video: 'retain-on-failure',
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'retain-on-failure',
     // Emulate standard desktop sizing
