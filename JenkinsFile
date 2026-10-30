@@ -65,7 +65,6 @@ pipeline {
                 alwaysLinkToLastBuild: true,
                 keepAll: true,
                 allowMissing: true,
-                linkRelative: false
             ])
 
             // Allure report
